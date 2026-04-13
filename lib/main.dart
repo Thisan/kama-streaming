@@ -30,7 +30,33 @@ class _HomePageState extends State<HomePage> {
   List<Map<String, String>> channels = [];
   TextEditingController urlController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    loadSavedUrl();
+  }
+
+  // 🔥 CARREGAR URL SALVA
+  Future<void> loadSavedUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? savedUrl = prefs.getString('m3u_url');
+
+    if (savedUrl != null) {
+      urlController.text = savedUrl;
+      loadM3U();
+    }
+  }
+
+  // 🔥 SALVAR URL
+  Future<void> saveUrl(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('m3u_url', url);
+  }
+
+  // 🔥 CARREGAR M3U
   Future<void> loadM3U() async {
+    await saveUrl(urlController.text);
+
     final response = await http.get(Uri.parse(urlController.text));
 
     if (response.statusCode == 200) {
@@ -106,6 +132,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
 // ================= PLAYER =================
 class PlayerPage extends StatefulWidget {
   final String url;
