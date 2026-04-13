@@ -12,57 +12,62 @@ class KamaStreamingApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'KAMA STREAMING',
       theme: ThemeData.dark(),
-      home: LoginPage(),
+      home: HomePage(),
     );
   }
 }
 
-// ================= LOGIN =================
-class LoginPage extends StatefulWidget {
-  @override
-  _LoginPageState createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
-  final macController = TextEditingController();
-
-  void login() {
-    if (macController.text.isNotEmpty) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PlayerPage(mac: macController.text),
-        ),
-      );
-    }
-  }
+// ================= HOME IPTV =================
+class HomePage extends StatelessWidget {
+  final List<Map<String, String>> channels = [
+    {
+      "name": "Globo",
+      "url": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    {
+      "name": "ESPN",
+      "url": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    {
+      "name": "Discovery",
+      "url": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    {
+      "name": "Cartoon",
+      "url": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('KAMA STREAMING', style: TextStyle(fontSize: 28)),
-              SizedBox(height: 30),
-              TextField(
-                controller: macController,
-                decoration: InputDecoration(
-                  labelText: 'Digite seu MAC',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: login,
-                child: Text('Entrar'),
-              ),
-            ],
-          ),
-        ),
+      appBar: AppBar(
+        title: Text('KAMA STREAMING'),
+        centerTitle: true,
+      ),
+      body: ListView.builder(
+        itemCount: channels.length,
+        itemBuilder: (context, index) {
+          return Card(
+            margin: EdgeInsets.all(8),
+            child: ListTile(
+              leading: Icon(Icons.live_tv, size: 30),
+              title: Text(channels[index]['name']!),
+              trailing: Icon(Icons.play_arrow),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PlayerPage(
+                      url: channels[index]['url']!,
+                      name: channels[index]['name']!,
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }
@@ -70,9 +75,10 @@ class _LoginPageState extends State<LoginPage> {
 
 // ================= PLAYER =================
 class PlayerPage extends StatefulWidget {
-  final String mac;
+  final String url;
+  final String name;
 
-  PlayerPage({required this.mac});
+  PlayerPage({required this.url, required this.name});
 
   @override
   _PlayerPageState createState() => _PlayerPageState();
@@ -81,16 +87,10 @@ class PlayerPage extends StatefulWidget {
 class _PlayerPageState extends State<PlayerPage> {
   VideoPlayerController? controller;
 
-  final m3uUrl = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
-
   @override
   void initState() {
     super.initState();
-    loadStream();
-  }
-
-  void loadStream() {
-    controller = VideoPlayerController.network(m3uUrl)
+    controller = VideoPlayerController.network(widget.url)
       ..initialize().then((_) {
         setState(() {});
         controller!.play();
@@ -107,7 +107,7 @@ class _PlayerPageState extends State<PlayerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('KAMA STREAMING'),
+        title: Text(widget.name),
       ),
       body: Center(
         child: controller != null && controller!.value.isInitialized
