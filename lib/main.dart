@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(KamaStreamingApp());
@@ -18,61 +20,91 @@ class KamaStreamingApp extends StatelessWidget {
 }
 
 // ================= HOME IPTV =================
-class HomePage extends StatelessWidget {
-  final List<Map<String, String>> channels = [
-    {
-      "name": "Globo",
-      "url": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
-    },
-    {
-      "name": "ESPN",
-      "url": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
-    },
-    {
-      "name": "Discovery",
-      "url": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
-    },
-    {
-      "name": "Cartoon",
-      "url": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
-    },
-  ];
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<Map<String, String>> channels = [];
+  TextEditingController urlController = TextEditingController();
+
+  Future<void> loadM3U() async {
+    final response = await http.get(Uri.parse(urlController.text));
+
+    if (response.statusCode == 200) {
+      final lines = LineSplitter.split(response.body).toList();
+
+      List<Map<String, String>> temp = [];
+
+      for (int i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('#EXTINF')) {
+          String name = lines[i].split(',').last;
+          String url = lines[i + 1];
+
+          temp.add({"name": name, "url": url});
+        }
+      }
+
+      setState(() {
+        channels = temp;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('KAMA STREAMING'),
-        centerTitle: true,
       ),
-      body: ListView.builder(
-        itemCount: channels.length,
-        itemBuilder: (context, index) {
-          return Card(
-            margin: EdgeInsets.all(8),
-            child: ListTile(
-              leading: Icon(Icons.live_tv, size: 30),
-              title: Text(channels[index]['name']!),
-              trailing: Icon(Icons.play_arrow),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PlayerPage(
-                      url: channels[index]['url']!,
-                      name: channels[index]['name']!,
-                    ),
+      body: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.all(10),
+            child: Column(
+              children: [
+                TextField(
+                  controller: urlController,
+                  decoration: InputDecoration(
+                    labelText: 'Cole a URL M3U',
+                    border: OutlineInputBorder(),
                   ),
+                ),
+                SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: loadM3U,
+                  child: Text('Carregar Lista'),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: channels.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(channels[index]['name']!),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PlayerPage(
+                          url: channels[index]['url']!,
+                          name: channels[index]['name']!,
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
 }
-
 // ================= PLAYER =================
 class PlayerPage extends StatefulWidget {
   final String url;
