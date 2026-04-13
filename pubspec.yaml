@@ -1,0 +1,14 @@
+name: kama_streaming
+description: IPTV base app
+publish_to: 'none'
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  video_player: ^2.7.0
+
+flutter:
+  uses-material-design: true
