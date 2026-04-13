@@ -9,6 +9,7 @@ dependencies:
   flutter:
     sdk: flutter
   video_player: ^2.7.0
+  http: ^0.13.6
 
 flutter:
   uses-material-design: true
